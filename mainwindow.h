@@ -6,6 +6,7 @@
 #include <QPushButton>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QSpinBox>
 
 class ScribbleArea;
 class OcrAppManager;
@@ -15,9 +16,17 @@ class MainWindow : public QMainWindow
     friend class OcrAppManager;
     Q_OBJECT    
 
+signals:
+    void learnDataSignal(QImage image, int label);
+
 public slots:
     void updatePredictionLabel(int pred);
     void updateActualLabel(int label);
+    void disableWhenDemoRunning();
+    void enableWhenDemoDone();
+    void emitLearnData(QImage image);
+    void toggleUi();
+    void setDoneLearning();
 
 public:
     explicit MainWindow(ScribbleArea* scribbleArea, QWidget *parent = 0);
@@ -27,6 +36,7 @@ private:
     QWidget *centerWidget;
 
     QHBoxLayout *hbox;
+    QHBoxLayout *actual_hbox;
     QVBoxLayout *vbox_left;
     QVBoxLayout *vbox_right;
 
@@ -34,11 +44,14 @@ private:
 
     QLabel *predictedLabel;
     QLabel *actualLabel;
-    QLabel *correctWrongLabel;
+    QLabel *doneLabel;
+
+    QSpinBox *actualLabelBox;
 
     QPushButton *predictButton;
     QPushButton *clearButton;
     QPushButton *mnistDemoButton;
+    QPushButton *learnButton;
 
     void setupUiElements();
 };

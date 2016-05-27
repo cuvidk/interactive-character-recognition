@@ -64,8 +64,9 @@ void NeuralNetwork::trainOn(arma::mat& input, const arma::mat& output, int numIt
     double crtCost = prevCost;
     for (int iteration = 0; iteration < numIterations; ++iteration)
     {
-        if (iteration % iterationsBetweenReport == 0 || iteration + 1 == numIterations)
-            std::cout << "Iteration: " << iteration << " | Cost: " << crtCost << std::endl;
+        if (iterationsBetweenReport)
+            if (iteration % iterationsBetweenReport == 0 || iteration + 1 == numIterations)
+                std::cout << "Iteration: " << iteration << " | Cost: " << crtCost << std::endl;
         if (crtCost > prevCost)
         {
             std::cout << "The cost is increasing. Choose a smaller learning rate." << std::endl;

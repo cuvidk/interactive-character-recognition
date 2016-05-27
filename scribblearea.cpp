@@ -90,6 +90,11 @@ void ScribbleArea::emitImageSignal()
     emit imageSignal(image);
 }
 
+void ScribbleArea::emitImageToLearn()
+{
+    emit imageToLearnSignal(image);
+}
+
 void ScribbleArea::setImage(QImage newImage)
 {
     image = newImage.scaled(width(), height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);

@@ -1,6 +1,7 @@
-#include "nnio.h"
-#include "nn/exception/fileopenexception.h"
-#include "nn/exception/fileformatexception.h"
+#include "../neural_network_io/nnio.h"
+#include "../exception/invalidinputexception.h"
+#include "../exception/fileopenexception.h"
+#include "../exception/fileformatexception.h"
 
 std::istringstream NnIO::m_iss;
 std::stringstream NnIO::m_ss;
@@ -143,6 +144,37 @@ void NnIO::loadUnifiedData(const std::string& filename, arma::mat& input, arma::
         throw FileOpenException(filename);
 
     file.close();
+}
+
+void NnIO::exportAsUnifiedData(const std::string& filename, arma::mat& input, arma::mat& output)
+{
+	std::ofstream file(filename);
+
+	if (file.is_open())
+	{
+		if (input.n_rows != output.n_rows)
+			throw InvalidInputException("Number of rows from input and output matrices are not equal.");
+
+		file << input.n_rows << " " << input.n_cols << " " << output.n_cols << "\n";			
+        for (unsigned int row = 0; row < input.n_rows; ++row)
+		{
+			m_ss.str(std::string());
+			m_ss.clear();
+			std::vector<double> inputRow = arma::conv_to<std::vector<double>>::from(input.row(row));
+			std::vector<double> outputRow = arma::conv_to<std::vector<double>>::from(output.row(row));
+
+			std::copy(inputRow.begin(), inputRow.end(), std::ostream_iterator<double>(m_ss, " "));
+			m_ss << "\n";
+			std::copy(outputRow.begin(), outputRow.end(), std::ostream_iterator<double>(m_ss, " "));
+
+			if (row != input.n_rows - 1)
+				file << m_ss.rdbuf() << "\n";
+			else
+				file << m_ss.rdbuf();
+		}			
+	}
+	else
+		throw FileOpenException(filename);
 }
 
 void NnIO::saveWeights(const std::string& filename, const std::vector<arma::mat>& weights)

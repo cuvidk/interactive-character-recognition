@@ -20,6 +20,8 @@ void OcrAppManager::manageConnections()
                      characterClassifier, SLOT(stopDemo()));
     QObject::connect(mainWindow->clearButton, SIGNAL(released()),
                      scribbleArea, SLOT(clearScreen()));
+    QObject::connect(mainWindow->clearButton, SIGNAL(released()),
+                     mainWindow, SLOT(enableWhenDemoDone()));
     QObject::connect(mainWindow->predictButton, SIGNAL(released()),
                      scribbleArea, SLOT(emitImageSignal()));
     QObject::connect(scribbleArea, SIGNAL(imageSignal(QImage)),
@@ -34,6 +36,18 @@ void OcrAppManager::manageConnections()
                      characterClassifier, SLOT(startDemo()));
     QObject::connect(mainWindow->mnistDemoButton, SIGNAL(released()),
                      scribbleArea, SLOT(setAreaUnrenderable()));
+    QObject::connect(mainWindow->mnistDemoButton, SIGNAL(released()),
+                     mainWindow, SLOT(disableWhenDemoRunning()));
+    QObject::connect(mainWindow->learnButton, SIGNAL(released()),
+                     mainWindow, SLOT(toggleUi()));
+    QObject::connect(mainWindow->learnButton, SIGNAL(released()),
+                     scribbleArea, SLOT(emitImageToLearn()));
+    QObject::connect(scribbleArea, SIGNAL(imageToLearnSignal(QImage)),
+                     mainWindow, SLOT(emitLearnData(QImage)));
+    QObject::connect(mainWindow, SIGNAL(learnDataSignal(QImage,int)),
+                     characterClassifier, SLOT(learnCharacter(QImage,int)));
+    QObject::connect(characterClassifier, SIGNAL(doneLearning()),
+                     mainWindow, SLOT(setDoneLearning()));
 }
 
 OcrAppManager::~OcrAppManager()

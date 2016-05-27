@@ -7,6 +7,8 @@
 CharacterClassifier::CharacterClassifier()
 {
     nn = new NeuralNetwork("resources/mnist-classifier");
+    nn->setLearningRate(0.1);
+    nn->setRegularizationFactor(0.1);
     mnistDemo = nullptr;
 }
 
@@ -45,14 +47,13 @@ void CharacterClassifier::emitNewPrediction(QImage image, int pred, int actual)
     emit newMnistImage(image);
 }
 
-void CharacterClassifier::predictImage(QImage image)
+void CharacterClassifier::preprocessImage(QImage &image, int finalImageSize)
 {
     image = foregroundToRect(image);
     image = image.scaled(20, 20, Qt::KeepAspectRatio);
 
     QPoint centerOfMass = computeCenterOfMass(image);
 
-    int finalImageSize = 28;
     QImage finalImage(finalImageSize, finalImageSize, QImage::Format_RGB32);
     finalImage.fill(qRgb(0, 0, 0));
 
@@ -62,19 +63,53 @@ void CharacterClassifier::predictImage(QImage image)
     painter.drawImage(drawPoint, image);
     painter.end();
 
+    image = finalImage;
+}
+
+arma::mat CharacterClassifier::getImageAsNormVec(const QImage &image, int finalImageSize)
+{
     arma::mat vecImage(1, finalImageSize * finalImageSize);
-    for (int col = 0; col < finalImage.width(); ++col)
-        for (int row = 0; row < finalImage.height(); ++row)
+    for (int col = 0; col < image.width(); ++col)
+        for (int row = 0; row < image.height(); ++row)
         {
-            QColor pixel = finalImage.pixel(col, row);
+            QColor pixel = image.pixel(col, row);
             double normalizedPixel = pixel.red() / 127.5 - 1;
             vecImage(0, row * finalImageSize + col) = normalizedPixel;
         }
+
+    return vecImage;
+}
+
+void CharacterClassifier::predictImage(QImage image)
+{
+    int finalImageSize = 28;
+
+    preprocessImage(image, finalImageSize);
+    arma::mat vecImage = getImageAsNormVec(image, finalImageSize);
 
     int firstPred, secondPred;
     computeBestPredictions(nn->predict(vecImage), firstPred, secondPred);
 
     emit nnPredictionLabel(firstPred);
+}
+
+void CharacterClassifier::learnCharacter(QImage image, int label)
+{
+    int finalImageSize = 28;
+
+    preprocessImage(image, finalImageSize);
+    arma::mat vecImage = getImageAsNormVec(image, finalImageSize);
+
+    //////////
+    //creates a vector that equals with the label of the image
+    //this should be changed, to adapt to all characters
+    arma::mat vecLabel = arma::zeros(1, 10);
+    vecLabel(0, label) = 1.0;
+    /////////
+
+    nn->trainOn(vecImage, vecLabel, 200);
+
+    emit doneLearning();
 }
 
 QPoint CharacterClassifier::computeCenterOfMass(const QImage &image)
@@ -132,8 +167,8 @@ QImage CharacterClassifier::foregroundToRect(QImage &image)
 
     if (right > left && upper < bottom)
     {
-        QRect foreground(left - 1, upper - 1,
-                         right - left + 2, bottom - upper + 2);
+        QRect foreground(left, upper,
+                         right - left + 1, bottom - upper + 1);
 
         image = image.copy(foreground);
     }
@@ -141,11 +176,11 @@ QImage CharacterClassifier::foregroundToRect(QImage &image)
     return image;
 }
 
-bool static isWhite(const QColor &color)
+bool static isBlack(const QColor &color)
 {
-    if (color.red() == 255 &&
-            color.green() == 255 &&
-            color.blue() == 255)
+    if (color.red() == 0 &&
+            color.green() == 0 &&
+            color.blue() == 0)
         return true;
     return false;
 }
@@ -158,7 +193,7 @@ void CharacterClassifier::setForegroundLimits(const QImage &image, int &upper,
         {
             QColor color = image.pixel(col, row);
 
-            if (isWhite(color))
+            if (!isBlack(color))
                 upper = row;
         }
 
@@ -167,7 +202,7 @@ void CharacterClassifier::setForegroundLimits(const QImage &image, int &upper,
         {
             QColor color = image.pixel(col, row);
 
-            if (isWhite(color))
+            if (!isBlack(color))
                 left = col;
         }
 
@@ -176,7 +211,7 @@ void CharacterClassifier::setForegroundLimits(const QImage &image, int &upper,
         {
             QColor color = image.pixel(col, row);
 
-            if (isWhite(color))
+            if (!isBlack(color))
                 bottom = row;
         }
 
@@ -185,7 +220,7 @@ void CharacterClassifier::setForegroundLimits(const QImage &image, int &upper,
         {
             QColor color = image.pixel(col, row);
 
-            if (isWhite(color))
+            if (!isBlack(color))
                 right = col;
         }
 }

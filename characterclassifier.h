@@ -23,7 +23,8 @@ public:
 
 public slots:
     void predictImage(QImage image);
-    void emitNewPrediction(QImage image, int pred, int second);
+    void learnCharacter(QImage image, int label);
+    void emitNewPrediction(QImage image, int pred, int second);    
     void startDemo();
     void stopDemo();
 
@@ -31,6 +32,7 @@ signals:
     void nnActualLabel(int actual);
     void nnPredictionLabel(int prediction);
     void newMnistImage(QImage image);
+    void doneLearning();
 
 private:
     MnistDemo *mnistDemo;
@@ -41,6 +43,8 @@ private:
     QImage foregroundToRect(QImage &image);
     void setForegroundLimits(const QImage &image, int &upper, int &bottom,
                              int &left, int &right);
+    void preprocessImage(QImage &image, int finalImageSize);
+    arma::mat getImageAsNormVec(const QImage &image, int finalImageSize);
 };
 
 #endif // CHARACTERCLASSIFIER_H

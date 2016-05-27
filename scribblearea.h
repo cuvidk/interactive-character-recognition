@@ -20,10 +20,12 @@ protected:
 
 signals:
     void imageSignal(QImage image);
+    void imageToLearnSignal(QImage image);
 
 public slots:
     void clearScreen();
     void emitImageSignal();
+    void emitImageToLearn();
     void setImage(QImage newImage);
     void setAreaUnrenderable();
 
