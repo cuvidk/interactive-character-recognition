@@ -39,8 +39,10 @@ void OcrAppManager::manageConnections()
     QObject::connect(mainWindow->mnistDemoButton, SIGNAL(released()),
                      mainWindow, SLOT(disableWhenDemoRunning()));
     QObject::connect(mainWindow->learnButton, SIGNAL(released()),
+                     mainWindow, SLOT(learnWarningBox()));
+    QObject::connect(mainWindow, SIGNAL(startLearning()),
                      mainWindow, SLOT(toggleUi()));
-    QObject::connect(mainWindow->learnButton, SIGNAL(released()),
+    QObject::connect(mainWindow, SIGNAL(startLearning()),
                      scribbleArea, SLOT(emitImageToLearn()));
     QObject::connect(scribbleArea, SIGNAL(imageToLearnSignal(QImage)),
                      mainWindow, SLOT(emitLearnData(QImage)));

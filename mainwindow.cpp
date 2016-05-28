@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "scribblearea.h"
+#include <QApplication>
 
 MainWindow::MainWindow(ScribbleArea* area, QWidget *parent) :
     QMainWindow(parent), scribbleArea(area)
@@ -71,6 +72,8 @@ void MainWindow::setupUiElements()
 
 void MainWindow::updatePredictionLabel(int pred)
 {
+    actualLabelBox->setValue(0);
+    doneLabel->setText("");
     predictedLabel->setText("Predicted label: " + QString::number(pred));
 }
 
@@ -91,6 +94,8 @@ void MainWindow::enableWhenDemoDone()
     predictButton->setDisabled(false);
     learnButton->setDisabled(false);
     actualLabelBox->setDisabled(false);
+    predictedLabel->setText("");
+    actualLabelBox->setValue(0);
 }
 
 void MainWindow::toggleUi()
@@ -102,6 +107,7 @@ void MainWindow::toggleUi()
 
     mnistDemoButton->setDisabled(mnistDemoButton->isEnabled());
     clearButton->setDisabled(clearButton->isEnabled());
+    qApp->processEvents();
 }
 
 void MainWindow::emitLearnData(QImage image)
@@ -113,6 +119,22 @@ void MainWindow::setDoneLearning()
 {
     toggleUi();
     doneLabel->setText("Done, hit predict again.");
+}
+
+void MainWindow::learnWarningBox()
+{
+    QMessageBox::StandardButton ret;
+    ret = QMessageBox::warning(this, "Warning", "Learning a character may be time expensive.\n"
+                                                "The whole UI will be blocked untill the end of learning process.\n"
+                                                "There's also a chance that your character won't be learned after the process.\n"
+                                                "Do you really want me to try to learn this?",
+                               QMessageBox::Yes | QMessageBox::No);
+    if (ret == QMessageBox::Yes)
+    {
+        doneLabel->setText("Learning. Please wait...");
+        qApp->processEvents();
+        emit startLearning();
+    }
 }
 
 MainWindow::~MainWindow()

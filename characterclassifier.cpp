@@ -1,8 +1,7 @@
 #include "characterclassifier.h"
 #include "mnistdemo.h"
 #include "nn/neural_network/neuralnetwork.h"
-
-#include <iostream>
+#include "nn/neural_network_io/nnio.h"
 
 CharacterClassifier::CharacterClassifier()
 {
@@ -66,15 +65,17 @@ void CharacterClassifier::preprocessImage(QImage &image, int finalImageSize)
     image = finalImage;
 }
 
-arma::mat CharacterClassifier::getImageAsNormVec(const QImage &image, int finalImageSize)
+arma::mat CharacterClassifier::getImageAsNormVec(const QImage &image)
 {
-    arma::mat vecImage(1, finalImageSize * finalImageSize);
-    for (int col = 0; col < image.width(); ++col)
-        for (int row = 0; row < image.height(); ++row)
+    int width = image.width();
+    int height = image.height();
+    arma::mat vecImage(1, width * height);
+    for (int col = 0; col < width; ++col)
+        for (int row = 0; row < height; ++row)
         {
             QColor pixel = image.pixel(col, row);
             double normalizedPixel = pixel.red() / 127.5 - 1;
-            vecImage(0, row * finalImageSize + col) = normalizedPixel;
+            vecImage(0, row * width + col) = normalizedPixel;
         }
 
     return vecImage;
@@ -85,7 +86,7 @@ void CharacterClassifier::predictImage(QImage image)
     int finalImageSize = 28;
 
     preprocessImage(image, finalImageSize);
-    arma::mat vecImage = getImageAsNormVec(image, finalImageSize);
+    arma::mat vecImage = getImageAsNormVec(image);
 
     int firstPred, secondPred;
     computeBestPredictions(nn->predict(vecImage), firstPred, secondPred);
@@ -93,21 +94,49 @@ void CharacterClassifier::predictImage(QImage image)
     emit nnPredictionLabel(firstPred);
 }
 
+void CharacterClassifier::loadTrainingData()
+{
+    if (training_images.size() == 0 && training_labels.size() == 0)
+    {
+        try {
+            NnIO::loadUnifiedData("resources/mnist-training-data-784", training_images, training_labels);
+        } catch (std::runtime_error& e) {
+            std::cerr << e.what() << std::endl;
+        }
+    }
+}
+
+void CharacterClassifier::saveNnAndTrainingData()
+{
+    if (training_images.size() != 0 && training_labels.size() != 0)
+    {
+        try {
+            NnIO::exportAsUnifiedData("resources/mnist-training-data-784", training_images, training_labels);
+            nn->exportNeuralNetwork("resources/mnist-classifier");
+        } catch (std::runtime_error& e) {
+            std::cerr << "State saving error: " << e.what() << std::endl;
+        }
+    }
+}
+
 void CharacterClassifier::learnCharacter(QImage image, int label)
 {
-    int finalImageSize = 28;
+    loadTrainingData();
 
-    preprocessImage(image, finalImageSize);
-    arma::mat vecImage = getImageAsNormVec(image, finalImageSize);
+    preprocessImage(image, 28);
+    arma::mat vecImage = getImageAsNormVec(image);
 
     //////////
     //creates a vector that equals with the label of the image
-    //this should be changed, to adapt to all characters
+    //this should be changed to adapt to all characters
     arma::mat vecLabel = arma::zeros(1, 10);
     vecLabel(0, label) = 1.0;
     /////////
 
-    nn->trainOn(vecImage, vecLabel, 200);
+    training_images = arma::join_vert(training_images, vecImage);
+    training_labels = arma::join_vert(training_labels, vecLabel);
+
+    nn->trainOn(training_images, training_labels, 100);
 
     emit doneLearning();
 }
@@ -227,6 +256,7 @@ void CharacterClassifier::setForegroundLimits(const QImage &image, int &upper,
 
 CharacterClassifier::~CharacterClassifier()
 {
+    saveNnAndTrainingData();
     stopDemo();
     delete nn;
 }

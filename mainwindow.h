@@ -7,6 +7,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QSpinBox>
+#include <QMessageBox>
 
 class ScribbleArea;
 class OcrAppManager;
@@ -17,6 +18,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT    
 
 signals:
+    void startLearning();
     void learnDataSignal(QImage image, int label);
 
 public slots:
@@ -24,6 +26,7 @@ public slots:
     void updateActualLabel(int label);
     void disableWhenDemoRunning();
     void enableWhenDemoDone();
+    void learnWarningBox();
     void emitLearnData(QImage image);
     void toggleUi();
     void setDoneLearning();
