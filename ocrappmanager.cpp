@@ -1,6 +1,6 @@
 #include "ocrappmanager.h"
-#include "mainwindow.h"
-#include "scribblearea.h"
+#include "ui/mainwindow.h"
+#include "ui/scribblearea.h"
 #include "characterclassifier.h"
 
 OcrAppManager::OcrAppManager()
