@@ -8,7 +8,7 @@ CharacterClassifier::CharacterClassifier()
     nn = new NeuralNetwork("resources/mnist-classifier");
     nn->setLearningRate(0.1);
     nn->setRegularizationFactor(0.1);
-    mnistDemo = nullptr;
+    mnistDemo = nullptr;   
 }
 
 void CharacterClassifier::startDemo()
