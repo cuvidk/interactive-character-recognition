@@ -35,7 +35,7 @@ HEADERS  += ui/mainwindow.h \
     digit-classification/mnistdemo.h \
     ocrappmanager.h \
     digit-classification/characterclassifier.h \
-    sleeper.h
+    util/sleeper.h
 
 FORMS    += ui/mainwindow.ui
 
